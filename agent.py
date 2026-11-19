@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import smtplib
 import logging
 from datetime import datetime, timedelta, timezone
@@ -134,13 +135,20 @@ def summarize(articles: list[dict], gemini_key: str | None = None) -> str | None
         + raw_text
     )
 
-    try:
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(model=MODEL, contents=prompt)
-        return clean_html_response(response.text)
-    except Exception as e:
-        logging.error(f"Gemini API error: {e}")
-        return None
+    client = genai.Client(api_key=api_key)
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = client.models.generate_content(model=MODEL, contents=prompt)
+            return clean_html_response(response.text)
+        except Exception as e:
+            if attempt < max_retries:
+                wait_sec = attempt * 3
+                logging.warning(f"Gemini API attempt {attempt} failed ({e}). Retrying in {wait_sec}s...")
+                time.sleep(wait_sec)
+            else:
+                logging.error(f"Gemini API error after {max_retries} attempts: {e}")
+                return None
 
 
 def create_email_message(html: str, sender: str, recipient: str, subject: str) -> MIMEMultipart:
