@@ -55,6 +55,21 @@ class TestAgent(unittest.TestCase):
             os.environ.clear()
             os.environ.update(old_env)
 
+    def test_validate_environment_empty_recipient_falls_back_to_gmail_user(self):
+        """When RECIPIENT_EMAIL is empty string (e.g. unset GitHub Actions secret), fall back to GMAIL_USER."""
+        old_env = os.environ.copy()
+        try:
+            os.environ["GEMINI_API_KEY"] = "gemini_secret_123"
+            os.environ["GMAIL_USER"] = "alice@gmail.com"
+            os.environ["GMAIL_APP_PASSWORD"] = "abcd efgh ijkl mnop"
+            os.environ["RECIPIENT_EMAIL"] = ""
+            
+            _, user, _, recipient = agent.validate_environment()
+            self.assertEqual(recipient, user)
+        finally:
+            os.environ.clear()
+            os.environ.update(old_env)
+
     def test_create_email_message_multipart(self):
         """Email message should be MIMEMultipart with both plain text and html parts."""
         html_content = "<h3>Daily AI</h3><p>Article 1</p>"

@@ -48,7 +48,7 @@ def validate_environment() -> tuple[str, str, str, str]:
     gemini_key = os.getenv("GEMINI_API_KEY")
     gmail_user = os.getenv("GMAIL_USER")
     gmail_pass = os.getenv("GMAIL_APP_PASSWORD")
-    recipient = os.getenv("RECIPIENT_EMAIL", gmail_user or "")
+    recipient = (os.getenv("RECIPIENT_EMAIL") or "").strip() or (gmail_user or "")
 
     missing = []
     if not gemini_key:
